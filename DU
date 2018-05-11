@@ -1,0 +1,1928 @@
+import java.sql.Timestamp;
+import java.text.DateFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import enums.DatePatternEnum;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public final class DateUtil {
+
+	// Declared constants for comparing two dates
+	public static final int INT_EQUAL = 0;
+	public static final int INT_GREATER_THAN = 1;
+	public static final int INT_LESS_THAN = -1;
+	public static final String ZEROS = "00";
+	public static final String ZERO = "0";
+	public static final String AM = "am";
+	public static final String PM = "pm";
+	public static final String CONVERSION_DATE = "01/01/2012";
+
+	/**
+	 * No need for an instance.
+	 */
+	private DateUtil() {
+	}
+
+	/**
+	 * Given a Date, it always returns the day as a String.
+	 * 
+	 * @param withTimeStamp
+	 *            true, if we are passing date with Timestamp or false, if not
+	 * @param date
+	 *            the given Date
+	 * @return the given date in the string format
+	 */
+	public static String dateToString(boolean withTimeStamp, Date date) {
+		String strDateFormat = null;
+		SimpleDateFormat dateFormat = null;
+		if (null != date) {
+			if (withTimeStamp) {
+				dateFormat = new SimpleDateFormat(
+						DatePatternEnum.SLASH_MM_DD_YYYY_HH_MM_SS.getValue());
+				strDateFormat = dateFormat.format(date);
+			} else {
+				dateFormat = new SimpleDateFormat(
+						DatePatternEnum.YYYY_MM_DD.getValue());
+				strDateFormat = dateFormat.format(date);
+			}
+		}
+		return strDateFormat;
+	}
+
+	/**
+	 * Given a Date, it always returns the day as a String.
+	 * 
+	 * @param date
+	 *            the given Date
+	 * @return the given date in the string format
+	 * 
+	 *         Date Format ("dd-MMM-yy")
+	 */
+
+	public static String dateToString(Date date) {
+		String strDateFormat = null;
+		SimpleDateFormat dateFormat = null;
+		if (null != date) {
+
+			dateFormat = new SimpleDateFormat(
+					DatePatternEnum.DASH_DD_MMM_YY.getValue());
+			strDateFormat = dateFormat.format(date);
+
+		}
+		return strDateFormat;
+	}
+
+	/**
+	 * Given a Date and the pattern, it always returns the day as a String.
+	 * 
+	 * @param datePattern
+	 *            Enum of date Patterns
+	 * @param date
+	 *            the given Date
+	 * @return the given date in the string format
+	 */
+	public static String parseDateToString(DatePatternEnum datePattern,
+			Date date) {
+		String strDateFormat = null;
+		SimpleDateFormat dateFormat = null;
+		if (null != date) {
+			if (null != datePattern) {
+				dateFormat = new SimpleDateFormat(datePattern.getValue());
+				strDateFormat = dateFormat.format(date);
+			} else {
+				dateFormat = new SimpleDateFormat(
+						DatePatternEnum.DEFAULT.getValue());
+				strDateFormat = dateFormat.format(date);
+			}
+		}
+		return strDateFormat;
+	}
+
+	/**
+	 * This method is used to return the first of the month date and time would
+	 * be set to 00:00:00.
+	 * 
+	 * @return Date first date of the month with time set.
+	 */
+	public static Date getFirstOfMonth() {
+		Calendar cal = Calendar.getInstance();
+		cal.set(DateUtil.getYear(DateUtil.getCurrDate()),
+				DateUtil.getMonth(DateUtil.getCurrDate()), 1);
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		Date firstOfMonth = cal.getTime();
+		return firstOfMonth;
+	}
+
+	/**
+	 * This method is used to return the first date of last month with time and
+	 * date set to 00:00:00.
+	 * 
+	 * @return Date first date of last month with time set.
+	 */
+	public static Date getFirstOfLastMonth() {
+		Calendar cal = Calendar.getInstance();
+		cal.set(DateUtil.getYear(DateUtil.getCurrDate()),
+				DateUtil.getMonth(DateUtil.getCurrDate()) - 1, 1);
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		Date firstOfLastMonth = cal.getTime();
+		return firstOfLastMonth;
+	}
+
+	public static Date getFirstOrLastDayMonth(String firstOrlast , Date dateToTransform){
+	   Calendar cal = Calendar.getInstance();
+	  if(firstOrlast ==null){
+		  cal.set(DateUtil.getYear(DateUtil.getCurrDate()), DateUtil.getMonth(DateUtil.getCurrDate()), 1);
+	  }else  if(firstOrlast.equalsIgnoreCase("FIRST")){
+   		cal.set(DateUtil.getYear(dateToTransform), DateUtil.getMonth(dateToTransform) , 1);
+	  }else if(firstOrlast.equalsIgnoreCase("LAST")){
+		   cal.set(DateUtil.getYear(dateToTransform), DateUtil.getMonth(dateToTransform),cal.getActualMaximum(Calendar.DAY_OF_MONTH));
+	   }
+	  cal.set(Calendar.HOUR_OF_DAY, 0);
+	  cal.set(Calendar.MINUTE, 0);
+	  cal.set(Calendar.SECOND, 0);
+	  cal.set(Calendar.MILLISECOND, 0);
+	  Date firstOrLastDayMonth = cal.getTime();
+	  
+	  return firstOrLastDayMonth;
+   }
+
+	/**
+	 * This method is used to calculate the age of the user when passing the
+	 * DOB.
+	 * 
+	 * @param dob
+	 *            date of birth
+	 * @return age in years
+	 */
+	public static int calculateAge(Date dob) {
+		int day = 1, month = 0, year = 1, ageYears, ageMonths, ageDays;
+		Calendar cd = Calendar.getInstance();
+		year = getYear(dob);
+		month = getMonth(dob);
+		day = getDate(dob);
+		Calendar bd = new GregorianCalendar(year, month, day);
+		ageYears = cd.get(Calendar.YEAR) - bd.get(Calendar.YEAR);
+		if (cd.before(new GregorianCalendar(cd.get(Calendar.YEAR), month, day))) {
+			ageYears--;
+			ageMonths = (12 - (bd.get(Calendar.MONTH) + 1))
+					+ (bd.get(Calendar.MONTH));
+			if (day > cd.get(Calendar.DAY_OF_MONTH)) {
+				ageDays = day - cd.get(Calendar.DAY_OF_MONTH);
+			} else if (day < cd.get(Calendar.DAY_OF_MONTH)) {
+				ageDays = cd.get(Calendar.DAY_OF_MONTH) - day;
+			} else {
+				ageDays = 0;
+			}
+		} else if (cd.after(new GregorianCalendar(cd.get(Calendar.YEAR), month,
+				day))) {
+			ageMonths = (cd.get(Calendar.MONTH) - (bd.get(Calendar.MONTH)));
+			if (day > cd.get(Calendar.DAY_OF_MONTH)) {
+				ageDays = day - cd.get(Calendar.DAY_OF_MONTH) - day;
+			} else if (day < cd.get(Calendar.DAY_OF_MONTH)) {
+				ageDays = cd.get(Calendar.DAY_OF_MONTH) - day;
+			} else {
+				ageDays = 0;
+			}
+		} else {
+			ageYears = cd.get(Calendar.YEAR) - bd.get(Calendar.YEAR);
+			ageMonths = 0;
+			ageDays = 0;
+		}
+		LOGGER.debug("Calc Age in Years : " + ageYears);
+		LOGGER.debug("Calc Age in Month : " + ageMonths);
+		LOGGER.debug("Calc Age in Days : " + ageDays);
+		return ageYears;
+	}
+
+	/**
+	 * This method is used to set the last time of the day for the date passed.
+	 * 
+	 * @param toDate
+	 *            Date for which the last time has to be set.
+	 * @return Date Date being set with the last time.
+	 */
+	public static Date getLastTimeOfDay(Date toDate) {
+		Calendar cal = Calendar.getInstance();
+		cal.set(DateUtil.getYear(toDate), DateUtil.getMonth(toDate),
+				DateUtil.getDate(toDate));
+		cal.set(Calendar.HOUR_OF_DAY, 23);
+		cal.set(Calendar.MINUTE, 59);
+		cal.set(Calendar.SECOND, 59);
+		cal.set(Calendar.MILLISECOND, 999);
+		Date lastTimeOfDay = cal.getTime();
+		return lastTimeOfDay;
+	}
+
+	/**
+	 * Method returns the calendar day of the month for the date passed as
+	 * parameter.
+	 * 
+	 * @param date
+	 *            the given Date
+	 * @return the day of the month
+	 */
+	public static int getDay(Date date) {
+
+		int dayOfMonth = 0;
+		if (null != date) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
+		}
+		return dayOfMonth;
+	}
+
+	/**
+	 * Method returns a Date object which represents the time at which it was
+	 * called.
+	 * 
+	 * @return the current data
+	 */
+	public static Date getCurrDate() {
+		return new Date();
+	}
+
+	/**
+	 * Given a Date, this method returns the next day.
+	 * 
+	 * @param date
+	 *            the given Date
+	 * @return the next day for the date passed as parameter.
+	 */
+	public static Date getNextDay(Date date) {
+		Date nextDay = null;
+		if (null != date) {
+			GregorianCalendar gc1 = new GregorianCalendar();
+			gc1.setTime(date);
+			gc1.add(Calendar.DATE, 1);
+			nextDay = gc1.getTime();
+		}
+		return nextDay;
+	}
+
+	/**
+	 * Given a Date, this method returns the next day's date with the time (all
+	 * HOUR, MINUTE, SECOND and MILLISECOND)to zero and AM_PM set to AM.
+	 * 
+	 * @param date
+	 *            Date for which the beginning of next is needed.
+	 * @return beginning of next day.
+	 */
+	public static Date beginningOfNextDay(Date date) {
+
+		Date nextDay = null;
+		if (null != date) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			nextDay = DateUtil
+					.getNextDay(DateUtil.beginningOfDay(cal.getTime()));
+		}
+		return nextDay;
+	}
+
+	/**
+	 * Synonym for beginningOfNextDay
+	 * 
+	 * @param date
+	 *            Date for which the beginning of next is needed.
+	 * @return beginning of next day.
+	 */
+	public static Date getNextDayWithZeroTime(Date date) {
+		return DateUtil.beginningOfNextDay(date);
+	}
+
+	/**
+	 * Given a <code>Date</code>, it returns the same date with the time (all
+	 * HOUR, MINUTE, SECOND and MILLISECOND)to zero and AM_PM set to AM that
+	 * represents beginning of the day.
+	 * 
+	 * @param date
+	 *            the <code>Date</code> for which the time needs to be set to
+	 *            Zero.
+	 * @return The same date with the time set to zero.
+	 */
+	public static Date beginningOfDay(Date date) {
+		Date day = null;
+		if (null != date) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			cal.set(Calendar.HOUR, 0);
+			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			cal.set(Calendar.AM_PM, Calendar.AM);
+			day = cal.getTime();
+		}
+		return day;
+	}
+
+	/**
+	 * Synonym for beginningOfDay.
+	 * 
+	 * @param date
+	 *            <code>Date</code> for which the time needs to be set to Zero.
+	 * @return same date with the time set to zero.
+	 */
+	public static Date getDateWithZeroTime(Date date) {
+
+		return DateUtil.beginningOfDay(date);
+	}
+
+	/**
+	 * Given a <code>Date</code>, it returns the date with the given month added
+	 * with the date (all HOUR, MINUTE, SECOND and MILLISECOND)to zero and AM_PM
+	 * set to AM.
+	 * 
+	 * @param date
+	 *            <code>Date</code> for which the no of months to be added.
+	 * @param months
+	 *            <code>int</code>for number of months
+	 * @return number of added days.
+	 */
+	public static Date addMonths(Date date, int months) {
+
+		Date result = null;
+		if (null != date) {
+			result = addToCalendar(date, months, Calendar.MONTH);
+		}
+		return result;
+	}
+
+	/**
+	 * Given <code>Date</code>, it returns the date with the given years added
+	 * with the date (all HOUR, MINUTE, SECOND and MILLISECOND)to zero and AM_PM
+	 * set to AM.
+	 * 
+	 * @param date
+	 *            <code>Date</code> for which the no of months to be added.
+	 * @param years
+	 *            <code>int</code> number of years
+	 * @return number of added days.
+	 */
+	public static Date addYears(Date date, int years) {
+
+		Date result = null;
+		if (null != date) {
+			result = addToCalendar(date, years, Calendar.YEAR);
+		}
+		return result;
+	}
+
+	/**
+	 * Given a <code>Date</code>, it returns the date with the given day's added
+	 * with the date (all HOUR, MINUTE, SECOND and MILLISECOND)to zero and AM_PM
+	 * set to AM.
+	 * 
+	 * @param date
+	 *            The <code>Date</code> for which the no of days to be added.
+	 * @param days
+	 *            The <code>int</code> no of days
+	 * @return number of added days.
+	 */
+	public static Date addDays(Date date, int days) {
+
+		Date result = null;
+		if (null != date && days > 0) {
+			result = addToCalendar(date, days, Calendar.DATE);
+		}
+		return result;
+	}
+
+	/**
+	 * Given a <code>Date</code>, it returns the date with the given month
+	 * subtracted with the date (all HOUR, MINUTE, SECOND and MILLISECOND)to
+	 * zero and AM_PM set to AM.
+	 * 
+	 * @param date
+	 *            <code>Date</code> for which the no of months to be added.
+	 * @param months
+	 *            <code>int</code> number of months
+	 * @return number of added days.
+	 */
+	public static Date subtractMonths(Date date, int months) {
+		Date result = null;
+		if (null != date && months > 0) {
+			result = addToCalendar(date, -months, Calendar.MONTH);
+		}
+		return result;
+	}
+
+	/**
+	 * Given <code>Date</code>, it returns the date with the given years
+	 * subtracted with the date (all HOUR, MINUTE, SECOND and MILLISECOND)to
+	 * zero and AM_PM set to AM.
+	 * 
+	 * @param date
+	 *            <code>Date</code> for which the no of months to be added.
+	 * @param years
+	 *            <code>int</code> number of years
+	 * @return number of added days.
+	 */
+	public static Date subtractYears(Date date, int years) {
+		Date result = null;
+		if (null != date && years > 0) {
+			result = addToCalendar(date, -years, Calendar.YEAR);
+		}
+		return result;
+	}
+
+	/**
+	 * Given a <code>Date</code>, it returns the date with the given day's
+	 * subtracted with the date (all HOUR, MINUTE, SECOND and MILLISECOND)to
+	 * zero and AM_PM set to AM.
+	 * 
+	 * @param date
+	 *            <code>Date</code> for which the number of days to be added.
+	 * @param days
+	 *            <code>int</code> number of days
+	 * @return number of added days.
+	 */
+	public static Date subtractDays(Date date, int days) {
+		Date result = null;
+		if (null != date && days > 0) {
+			result = addToCalendar(date, -days, Calendar.DATE);
+		}
+		return result;
+	}
+
+	/**
+	 * This method will take in an initial date, a field to add (Calendar.DATE,
+	 * MONTHS or YEARS) and the amount of that field to add (ie. number of days
+	 * to add).
+	 * 
+	 * @param date
+	 *            initial date to be modified
+	 * @param amountToAdd
+	 *            number of days/months/years to add
+	 * @param fieldToAdd
+	 *            value of days/months/years from Java.util.Calendar
+	 * @return Date updated date
+	 */
+	private static Date addToCalendar(Date date, int amountToAdd, int fieldToAdd) {
+
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(fieldToAdd, amountToAdd);
+		return DateUtil.getDateWithZeroTime(cal.getTime());
+	}
+
+	/**
+	 * Formats and returns a <code>String</code> as per the given format. The
+	 * format must be a legal format as per pattern letters specified in
+	 * <code>java.text.SimpleDateFormat</code>. Otherwise, it defaults to a
+	 * pre-defined default pattern which is <code>MM/dd/yyyy</code>.
+	 * 
+	 * @param date
+	 *            the date to be formatted.
+	 * @param pattern
+	 *            pattern to be used for formating the date.
+	 * @return the formatted date.
+	 * @see SimpleDateFormat
+	 */
+	public static String formatDate(Date date, DatePatternEnum pattern) {
+
+		String dateString = null;
+		String patternStr = null;
+		if (date == null) {
+			dateString = "";
+		} else {
+			if (pattern == null) {
+				patternStr = DatePatternEnum.DEFAULT.getValue();
+			} else {
+				patternStr = pattern.getValue();
+			}
+			SimpleDateFormat sd = new SimpleDateFormat(patternStr);
+			dateString = sd.format(date);
+		}
+		return dateString;
+	}
+
+	/**
+	 * Formats and returns a <code>Date</code> as per the given format. The
+	 * format must be a legal format as per pattern letters specified in
+	 * <code>java.text.SimpleDateFormat</code>. Otherwise, it defaults to a
+	 * pre-defined default pattern which is <code>MM/dd/yyyy</code>.
+	 * 
+	 * @param value
+	 *            the date String.
+	 * @param pattern
+	 *            ENUM of date pattern
+	 * @return the formatted date.
+	 * 
+	 * @see java.text.SimpleDateFormat
+	 */
+	public static Date parse(String value, DatePatternEnum pattern) {
+		if (value == null || value.trim().length() == 0) {
+			return null;
+		}
+		String patternStr = null;
+		Date formattedDate = null;
+		if (pattern == null) {
+			patternStr = DatePatternEnum.DEFAULT.getValue();
+		} else {
+			patternStr = pattern.getValue();
+		}
+		SimpleDateFormat sd = new SimpleDateFormat(patternStr);
+		try {
+			formattedDate = sd.parse(value);
+		} catch (ParseException ex) {
+			LOGGER.error("Exception in DateUtil.parse", ex);
+		}
+		return formattedDate;
+	}
+
+	/**
+	 * Given a <code>Date</code>, it always returns the month as a TWO digit
+	 * String. e.g.<br/>
+	 * A date with month set to 1 will return 02. A date with month set to 11
+	 * will return 12.
+	 * 
+	 * @param date
+	 *            the given date
+	 * @return the month as two digit string
+	 */
+	public static String getTwoDigitMonth(Date date) {
+		String twoDigitMonth = null;
+		if (date == null) {
+			twoDigitMonth = "";
+		} else {
+			twoDigitMonth = DateUtil.formatDate(date, DatePatternEnum.DEFAULT)
+					.substring(0, 2);
+		}
+		return twoDigitMonth;
+	}
+
+	/**
+	 * Given a <code>Date</code>, it always returns the day as a TWO digit
+	 * String. e.g.<br/>
+	 * A date with day set to 1 will return 01. A date with day set to 11 will
+	 * return 11.
+	 * 
+	 * @param date
+	 *            the given date
+	 * @return the day as two digit string
+	 */
+	public static String getTwoDigitDay(Date date) {
+		String twoDigitDay = null;
+		if (date == null) {
+			twoDigitDay = "";
+		} else {
+			twoDigitDay = DateUtil.formatDate(date, DatePatternEnum.DEFAULT)
+					.substring(3, 5);
+		}
+		return twoDigitDay;
+	}
+
+	/**
+	 * Method returns the next year from the current date.
+	 * 
+	 * @return the next year as four digit number
+	 */
+	public static int getNextYear() {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(getCurrDate());
+		cal.add(Calendar.YEAR, 1);
+		return cal.get(Calendar.YEAR);
+	}
+
+	/**
+	 * Given a <code>Date</code>, it always returns the year as a Four digit
+	 * number.
+	 * 
+	 * @param date
+	 *            the given date
+	 * @return the year as four digit number
+	 */
+	public static int getYear(Date date) {
+		int year = 0;
+		if (date != null) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			year = cal.get(Calendar.YEAR);
+		}
+		return year;
+	}
+
+	/**
+	 * Given a <code>Date</code>, it always returns the month . e.g.<br/>
+	 * JAN as 0,.....DEC as 11
+	 * 
+	 * @param date
+	 *            the given date
+	 * @return the month for the date passed as parameter
+	 */
+	public static int getMonth(Date date) {
+		int month = -1;
+		if (null != date) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			month = cal.get(Calendar.MONTH);
+		}
+		return month;
+	}
+
+	/**
+	 * Given a <code>Month</code>, it always returns the month . e.g.<br/>
+	 * 0 as JAN,.....11 as DEC
+	 * 
+	 * @param date
+	 *            the given Month
+	 * @return the month for the int Month passed as parameter
+	 */
+	public static String getMonthLabel(int month) {
+		return new DateFormatSymbols().getMonths()[month];
+	}
+
+	/**
+	 * Given a <code>Date</code>, it always returns the week
+	 * 
+	 * @param date
+	 *            the given date
+	 * @return the date
+	 */
+	public static int getWeek(Date date) {
+		int week = 0;
+		if (null != date) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			week = cal.get(Calendar.WEEK_OF_YEAR);
+		}
+		return week;
+	}
+
+	/**
+	 * Given a <code>Date</code>, it always returns the date
+	 * 
+	 * @param date
+	 *            the given date
+	 * @return the date
+	 */
+	public static int getDate(Date date) {
+		int dateInDate = 0;
+		if (null != date) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			dateInDate = cal.get(Calendar.DATE);
+		}
+		return dateInDate;
+	}
+
+	/**
+	 * Given a <code>Date</code> as startDate and <code>Date</code> as endDate,
+	 * returns a value 1,-1,0.
+	 * <p>
+	 * e.g.<br/>
+	 * 1 represents startDate is greater than endDate -1 represents startDate is
+	 * less than endDate 0 represents startDate is equal to endDate
+	 * </p>
+	 * 
+	 * @param startDate
+	 *            given Start Date
+	 * @param endDate
+	 *            given End Date
+	 * @return the compared result of the dates
+	 */
+	public static int compareDates(Date startDate, Date endDate) {
+
+		int result = 0;
+		if (null != startDate && null != endDate) {
+			result = startDate.compareTo(endDate);
+		}
+		return result;
+	}
+
+	/**
+	 * Given a <code>Date</code> , returns true or false if given date is future
+	 * from the current date
+	 * 
+	 * @param date
+	 *            the given Date
+	 * @return boolean
+	 */
+	/*
+	 * Does not work if the Timestamp is wrong
+	 */
+	public static boolean isFutureDate(Date date) {
+		boolean isDateFuture = false;
+		if (date != null) {
+			isDateFuture = date.after(new Date());
+		}
+		return isDateFuture;
+	}
+
+	public static boolean isBeforeQuarterlyEndDate(Date date)
+			throws ParseException {
+		boolean isAfterQuarterlyEndDate = false;
+		Calendar cal = Calendar.getInstance();
+		if (!STARSUtil.isNull(date)) {
+			Date currentDate = new Date();
+			cal.setTime(currentDate);
+			int month = cal.get(Calendar.MONTH) + 1;
+			int year = cal.get(Calendar.YEAR);
+			Date lastDayOfCurrentQuater = getLastDayOfTheQuarter(
+					String.valueOf(month), String.valueOf(year));
+			if (date.after(lastDayOfCurrentQuater)) {
+				isAfterQuarterlyEndDate = true;
+			}
+
+		}
+		return isAfterQuarterlyEndDate;
+	}
+
+	public static boolean isBeforeMonthlyEndDate(Date date)
+			throws ParseException {
+		boolean isAfterMonthlylyEndDate = false;
+		if (!STARSUtil.isNull(date)) {
+			Date lastDayOfCurrentMonth = getLastDayOfMonth(new Date());
+			if (date.after(lastDayOfCurrentMonth)) {
+				isAfterMonthlylyEndDate = true;
+			}
+		}
+		return isAfterMonthlylyEndDate;
+	}
+
+	/**
+	 * Given a <code>Date</code> , returns true or false if given date is before
+	 * the current date
+	 * 
+	 * @param date
+	 *            the given Date
+	 * @return true, if the date given is past date or false, if not
+	 */
+	public static boolean isPastDate(Date date) {
+		boolean retValue = false;
+		if (date != null) {
+			Date currDate = new Date();
+			if (isCurrentDate(date)) {
+				retValue = false;
+			} else {
+				retValue = date.before(currDate);
+			}
+		}
+		return retValue;
+	}
+
+	/**
+	 * Given a <code>Date</code> , returns true or false if given date is equal
+	 * to the current date
+	 * 
+	 * @param date
+	 *            given date
+	 * @return true if the current date is not false if the current date is not
+	 */
+	public static boolean isCurrentDate(Date date) {
+		boolean retValue = false;
+		if (date != null) {
+			Date currDate = new Date();
+			retValue = (getYear(currDate) == getYear(date))
+					&& (getMonth(currDate) == getMonth(date))
+					&& (getDay(currDate) == getDay(date));
+		}
+		return retValue;
+	}
+
+	/**
+	 * Given a <code>Date</code> as date1 and <code>Date</code> as date2,
+	 * returns the difference of years between two dates
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @return the difference between the dates in terms of years
+	 */
+	public static long dateDifferenceInYears(Date date1, Date date2) {
+
+		Calendar calendar1 = new GregorianCalendar();
+		Calendar calendar2 = new GregorianCalendar();
+		long res = 0;
+		if (null != date1 && null != date2) {
+			calendar1.setTime(date1);
+			calendar2.setTime(date2);
+			Calendar fromDate;
+			Calendar toDate;
+			// From the two dates, we are now identify which date is bigger.
+			int returnValue = calendar1.compareTo(calendar2);
+			// The bigger one is set as toDate and the smaller one is fromDate
+			// so that we always get a positive duration
+			if (returnValue > 0) {
+				fromDate = calendar2;
+				toDate = calendar1;
+			} else {
+				fromDate = calendar1;
+				toDate = calendar2;
+			}
+			res = toDate.get(Calendar.YEAR) - fromDate.get(Calendar.YEAR);
+			if ((fromDate.get(Calendar.MONTH) > toDate.get(Calendar.MONTH))
+					|| (fromDate.get(Calendar.MONTH) == toDate
+							.get(Calendar.MONTH) && fromDate
+							.get(Calendar.DAY_OF_MONTH) > toDate
+							.get(Calendar.DAY_OF_MONTH))) {
+				res--;
+			}
+
+		}
+		return res;
+	}
+
+	/**
+	 * Given a <code>Date</code> as date1 and <code>Date</code> as date2,
+	 * returns the difference of months between two dates
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @return the difference between the dates in terms of months
+	 */
+	public static long dateDifferenceInMonths(Date date1, Date date2) {
+
+		int month1 = 0;
+		int month2 = 0;
+		int years1 = 0;
+		int years2 = 0;
+		if (null != date1 && null != date2) {
+			Calendar calendar1 = Calendar.getInstance();
+			Calendar calendar2 = Calendar.getInstance();
+			calendar1.setTime(date1);
+			calendar2.setTime(date2);
+			if (calendar1.compareTo(calendar2) > 0) {
+				// Calender1 is biggest
+				years2 = calendar1.get(Calendar.YEAR);
+				month2 = calendar1.get(Calendar.MONTH);
+				years1 = calendar2.get(Calendar.YEAR);
+				month1 = calendar2.get(Calendar.MONTH);
+			} else {
+				// Calender2 is biggest or equal
+				years1 = calendar1.get(Calendar.YEAR);
+				month1 = calendar1.get(Calendar.MONTH);
+				years2 = calendar2.get(Calendar.YEAR);
+				month2 = calendar2.get(Calendar.MONTH);
+			}
+		}
+		return ((years2 - years1) * 12) + (month2 - month1);
+	}
+
+	/**
+	 * Given a <code>Date</code> as date1 and <code>Date</code> as date2,
+	 * returns the difference of days between two dates
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @return the difference between the dates in terms of days
+	 */
+	public static long dateDifferenceInDays(Date date1, Date date2) {/*
+																	 * int
+																	 * MILLIS_IN_DAY
+																	 * = 1000 *
+																	 * 60 * 60 *
+																	 * 24;
+																	 * Calendar
+																	 * startDate
+																	 * =
+																	 * Calendar
+																	 * .getInstance
+																	 * ();
+																	 * startDate
+																	 * .
+																	 * setTime(date1
+																	 * );
+																	 * Calendar
+																	 * endDate =
+																	 * Calendar
+																	 * .getInstance
+																	 * ();
+																	 * endDate
+																	 * .setTime
+																	 * (date2);
+																	 * 
+																	 * long
+																	 * endInstant
+																	 * =
+																	 * endDate.
+																	 * getTimeInMillis
+																	 * (); int
+																	 * presumedDays
+																	 * = (int)
+																	 * ((
+																	 * endInstant
+																	 * -
+																	 * startDate
+																	 * .
+																	 * getTimeInMillis
+																	 * ()) /
+																	 * MILLIS_IN_DAY
+																	 * );
+																	 * Calendar
+																	 * cursor =
+																	 * (
+																	 * Calendar)
+																	 * startDate
+																	 * .clone();
+																	 * cursor
+																	 * .add
+																	 * (Calendar
+																	 * .
+																	 * DAY_OF_YEAR
+																	 * ,
+																	 * presumedDays
+																	 * ); long
+																	 * instant =
+																	 * cursor.
+																	 * getTimeInMillis
+																	 * (); if
+																	 * (instant
+																	 * ==
+																	 * endInstant
+																	 * ) return
+																	 * presumedDays
+																	 * ; final
+																	 * int step
+																	 * = instant
+																	 * <
+																	 * endInstant
+																	 * ? 1 : -1;
+																	 * do {
+																	 * cursor
+																	 * .add
+																	 * (Calendar
+																	 * .
+																	 * DAY_OF_MONTH
+																	 * , step);
+																	 * presumedDays
+																	 * += step;
+																	 * } while
+																	 * (cursor.
+																	 * getTimeInMillis
+																	 * () !=
+																	 * endInstant
+																	 * ); return
+																	 * presumedDays
+																	 * ;
+																	 */
+		// The Commented line is taking longer time to execute.
+		Calendar startDate = Calendar.getInstance();
+		startDate.setTime(date1);
+		Calendar endDate = Calendar.getInstance();
+		endDate.setTime(date2);
+		Calendar date = (Calendar) startDate.clone();
+		long daysBetween = 0;
+		while (date.before(endDate)) {
+			date.add(Calendar.DAY_OF_MONTH, 1);
+			daysBetween++;
+		}
+		return daysBetween;
+	}
+
+	/**
+	 * Given a <code>Date</code> as date1 and <code>Date</code> as date2,
+	 * returns the difference of days between two dates
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @return the difference between the dates in terms of days
+	 */
+	public static long dateDifferenceInDaysWithoutTime(Date date1, Date date2) {
+		Date updatedDate1 = beginningOfDay(date1);
+		Date updatedDate2 = beginningOfDay(date2);
+		return dateDifferenceInDays(updatedDate1, updatedDate2);
+	}
+
+	/**
+	 * Given a <code>Date</code> as date1 and <code>Date</code> as date2,
+	 * returns the difference of hours between two dates
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @return the difference between the date in hours
+	 */
+	public static long dateDifferenceInHours(Date date1, Date date2) {
+
+		return ((getMilliseconds(date1, date2)) / (60 * 60 * 1000));
+	}
+
+	/**
+	 * Given a <code>Date</code> as date1 and <code>Date</code> as date2,
+	 * returns the difference of minutes between two dates
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @return the difference between dates in minutes
+	 */
+	public static long dateDifferenceInMinutes(Date date1, Date date2) {
+
+		return ((getMilliseconds(date1, date2)) / (60 * 1000));
+	}
+
+	/**
+	 * Given a <code>Date</code> as date1 and <code>Date</code> as date2,
+	 * returns the difference of seconds between two dates
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @return the difference between the date in seconds
+	 */
+	public static long dateDifferenceInSeconds(Date date1, Date date2) {
+
+		return ((getMilliseconds(date1, date2)) / (1000));
+	}
+
+	/**
+	 * Given a <code>Date</code> as date1 ,<code>Date</code> as date2,
+	 * <code>int</code> as noYears, will return the difference of years between
+	 * two dates is greater than,less than or equal to the given no. of years
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @param noYears
+	 *            given number of years
+	 * @return the difference between the date in terms of years
+	 */
+	public static int compareDateDiffInYears(Date date1, Date date2, int noYears) {
+		int retValue = 0;
+		long diffYears = dateDifferenceInYears(date1, date2);
+		if (diffYears > noYears) {
+			retValue = 1; // Date2 is more "noYears" greater than date1
+		} else if (diffYears < noYears) {
+			retValue = -1; // Date2 is not "noYears" greater than date1
+		} else if (diffYears == noYears) {
+			int year1 = getYear(date1);
+			int year2 = getYear(date2);
+			if (year2 > (year1 + diffYears)) {
+				retValue = 1; // Date2 is more "noYears" greater than date1
+			} else {
+				int month1 = getMonth(date1);
+				int month2 = getMonth(date2);
+				if (month2 > month1) {
+					retValue = 1; // Date2 is more "noYears" greater than date1
+				} else {
+					int day1 = getDate(date1);
+					int day2 = getDate(date2);
+					if (day2 > day1) {
+						retValue = 1; // Date2 is more "noYears" greater than
+										// date1
+					}
+				}
+			}
+		}
+		return retValue;
+	}
+
+	/**
+	 * Given a <code>Date</code> as date,will return the name of the month as
+	 * String
+	 * 
+	 * @param date
+	 *            given Date
+	 * @return the month name
+	 */
+	public static String getMonthName(Date date) {
+
+		String monthName = "";
+		Calendar cal = GregorianCalendar.getInstance();
+		SimpleDateFormat df = new SimpleDateFormat("MMMM");
+		if (date != null) {
+			cal.setTime(date);
+			monthName = df.format(cal.getTime());
+		}
+		return monthName;
+	}
+
+	/**
+	 * Given a <code>int</code> as year and <code>int</code> as month, will
+	 * return the no of days in the month
+	 * 
+	 * @param year
+	 *            the given year
+	 * @param month
+	 *            the given month
+	 * @return the number of days in the month based on the year and month
+	 */
+	public static int getNoOfDaysInMonth(int year, int month) {
+		int noOfDays = 0;
+		if (year > 0 && month > -1) {
+			// Create a calendar object of the desired month
+			Calendar cal = new GregorianCalendar(year, (month - 1), 1);
+			// Get the number of days in that month
+			noOfDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH); // 28
+		}
+		return noOfDays;
+	}
+
+	/**
+	 * Given a <code>int</code> as year and <code>int</code> as month, will
+	 * return the no of days in the month
+	 * 
+	 * @param hour
+	 *            the given hour
+	 * @return the formatted hour
+	 */
+	public static String getFormattedHour(int hour) {
+		String result = null;
+		if (hour == 0 || hour == 24) {
+			result = "12" + PM;
+		} else if (hour <= 12) {
+			result = (Integer.valueOf(hour)).toString() + AM;
+		} else {
+			result = (Integer.valueOf(hour)).toString() + PM;
+		}
+		return result;
+	}
+
+	/**
+	 * Formats and returns a <code>Date</code> as per the given format.
+	 * <p>
+	 * The format must be a legal format as per pattern letters specified in
+	 * <code>java.text.SimpleDateFormat</code>. Otherwise, it defaults to a
+	 * pre-defined default pattern which is <code>MM/dd/yyyy	</code>.
+	 * </p>
+	 * 
+	 * @param timestamp
+	 *            given TimeStamp
+	 * @param dateFormat
+	 *            ENUM of date pattern
+	 * @return the formatted date
+	 * @throws ParseException
+	 */
+	public static Date formatTimestampDate(Timestamp timestamp,
+			DatePatternEnum dateFormat) throws ParseException {
+		Date thisDate = null;
+		if (timestamp != null) {
+			String dateFormatStr = null;
+			try {
+				if (dateFormat == null) {
+					dateFormatStr = DatePatternEnum.DEFAULT.getValue();
+				} else {
+					dateFormatStr = dateFormat.getValue();
+				}
+				java.sql.Date date = new java.sql.Date(timestamp.getTime());
+				SimpleDateFormat sdf = new SimpleDateFormat(dateFormatStr);
+
+				String formattedDate = sdf.format(date);
+				thisDate = sdf.parse(formattedDate);
+			} catch (ParseException e) {
+				LOGGER.error("Exception in DateUtil.formatTimestampDate", e);
+				throw e;
+			}
+		}
+		return thisDate;
+	}
+
+	/**
+	 * Given a <code>String</code> as date format, will return true or false if
+	 * day has 0 in the given date
+	 * 
+	 * @param dateString
+	 *            the date string
+	 * @return true, if the date contains zero or false, if not
+	 */
+	@Deprecated
+	public static boolean isDateContainsZerosAsDay(String dateString) {
+		boolean retValue = false;
+		String dayfromDate;
+		LOGGER.debug(dateString);
+		if (dateString != null && dateString.length() > 0) {
+			int start = dateString.indexOf("/") + 1;
+			int end = dateString.length();
+			dayfromDate = dateString.substring(start, end);
+			int new_end = dayfromDate.indexOf("/");
+			if (new_end != -1) {
+				dayfromDate = dayfromDate.substring(0, new_end);
+			}
+
+			if (isDayWithinValidRange(dayfromDate)) {
+				retValue = true;
+			}
+		} else {
+			retValue = false;
+		}
+		return retValue;
+	}
+
+	/**
+	 * Given a <code>String</code> as day format, will return true or false if
+	 * day is within valid range
+	 * 
+	 * @param day
+	 *            the day string
+	 * @return true, if the day is valid or false, if the day is not valid
+	 * 
+	 */
+	@Deprecated
+	public static boolean isDayWithinValidRange(String day) {
+		boolean retValue = false;
+		if (day == null) {
+			retValue = false;
+		} else if (day.length() == 0) {
+			retValue = false;
+		} else {
+			int dayInt = Integer.parseInt(day);
+			if (dayInt >= 0 && dayInt <= 31) {
+				retValue = true;
+			}
+		}
+		return retValue;
+	}
+
+	/**
+	 * Given a <code>String</code> as date format, will return true or false if
+	 * day is valid date
+	 * 
+	 * @param date
+	 *            the date string
+	 * @return true, if date is valid or false, if not
+	 */
+	public static boolean isValidDate(String date,
+			DatePatternEnum datePatternEnum) {
+
+		String datePatternStr = null;
+		if (datePatternEnum == null) {
+			datePatternStr = DatePatternEnum.DEFAULT.getValue();
+		} else {
+			datePatternStr = datePatternEnum.getValue();
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat(datePatternStr);
+		boolean isValid = false;
+		if (!STARSUtil.isNullOrBlank(date)) {
+			try {
+				sdf.setLenient(false);
+				sdf.parse(date);
+				isValid = true;
+			} catch (Exception e) {
+				LOGGER.error("Exception in DateUtil.isValidDate", e);
+				isValid = false;
+			}
+		}
+		return isValid;
+	}
+
+	/**
+	 * Given a <code>Date</code>, it always returns the day in requested string
+	 * format.
+	 * <p>
+	 * e.g.<br/>
+	 * A date with day set to 1 will return 01. A date with day set to 11 will
+	 * return 11.
+	 * </p>
+	 * 
+	 * @param date
+	 *            the date
+	 * @return the day as two digit string
+	 */
+
+	/**
+	 * @param withTimeStamp
+	 *            true, if TimeStamp required or false, if TimeStamp not
+	 *            required
+	 * @param utilDate
+	 *            the given date
+	 * @param pattern
+	 *            pattern for formatting the date
+	 * @return the formatted date
+	 */
+	@Deprecated
+	public static String dateToFormatedString(boolean withTimeStamp,
+			Date utilDate, DatePatternEnum pattern) {
+		String strDateFormat = null;
+		SimpleDateFormat dateFormat = null;
+		if (utilDate != null) {
+			if (withTimeStamp) {
+				dateFormat = new SimpleDateFormat(pattern.getValue());
+				strDateFormat = dateFormat.format(utilDate);
+			} else {
+				dateFormat = new SimpleDateFormat(pattern.getValue());
+				strDateFormat = dateFormat.format(utilDate);
+			}
+		}
+
+		return strDateFormat;
+	}
+
+	/**
+	 * Given a Date this method will return time in HH:MM AM/PM
+	 * 
+	 * @param date
+	 *            the given date
+	 * @return the formatted date with HH:MM AM/PM
+	 */
+	public static String getTime(Date date) {
+		String time = null;
+		if (date != null) {
+			Calendar calendar = new GregorianCalendar();
+			String am_pm;
+			int hour = calendar.get(Calendar.HOUR);
+			int minute = calendar.get(Calendar.MINUTE);
+			if (calendar.get(Calendar.AM_PM) == 0) {
+				am_pm = "AM";
+			} else {
+				am_pm = "PM";
+			}
+			time = hour + "." + minute + am_pm;
+		}
+		return time;
+	}
+
+	/**
+	 * This method returns a formatted time based the input date value
+	 * 
+	 * @param format
+	 *            format to which the date needs to be converted
+	 * @param date
+	 *            the given date
+	 * @return the formatted date
+	 */
+	@Deprecated
+	public static String getFormatedTime(DatePatternEnum format, Date date) {
+
+		SimpleDateFormat formatter = null;
+		String formattedDate = null;
+		if (null != format && null != date) {
+			formatter = new SimpleDateFormat(format.getValue());
+			formattedDate = formatter.format(date);
+		}
+		return formattedDate;
+	}
+
+	/**
+	 * This method gets today's date in Julian form (i.e. YYDDD)
+	 * 
+	 * @return julianDate The Julian form of today's date
+	 */
+	public static String getJulianDate() {
+		String julianDate = "";
+		int year = DateUtil.getYear(getCurrDate());
+		String concatYear = String.valueOf(year);
+		int day = 0;
+		int month = DateUtil.getMonth(getCurrDate()) + 1;
+		for (int monthCounter = 1; monthCounter < month; monthCounter++) {
+			day += DateUtil.getNoOfDaysInMonth(year, monthCounter);
+		}
+		day += DateUtil.getDay(getCurrDate());
+		String concatDay = String.valueOf(day);
+		concatDay = STARSUtil.leftPad(concatDay, 3, '0');
+		julianDate = concatYear + concatDay;
+
+		return julianDate;
+	}
+
+	/**
+	 * This method gets today's day in Julian form (i.e. DDD)
+	 * 
+	 * @return julianDay The Julian form of today's date
+	 */
+	public static String getJulianDay() {
+		int year = DateUtil.getYear(getCurrDate());
+		int day = 0;
+		int month = DateUtil.getMonth(getCurrDate());
+		for (int monthCounter = 0; monthCounter < month; monthCounter++) {
+			day += DateUtil.getNoOfDaysInMonth(year, monthCounter);
+		}
+		day += DateUtil.getDay(getCurrDate());
+		String julianDay = String.valueOf(day);
+		julianDay = STARSUtil.leftPad(julianDay, 3, '0');
+		return julianDay;
+	}
+
+	/**
+	 * This method is used to compute the difference between two dates in
+	 * milliseconds
+	 * 
+	 * @param date1
+	 *            given date
+	 * @param date2
+	 *            given date
+	 * @return the difference between the date in milliseconds
+	 */
+	public static long getMilliseconds(Date date1, Date date2) {
+		long milliSeconds = 0;
+		if (null != date1 && null != date2) {
+			Calendar calendar1 = Calendar.getInstance();
+			Calendar calendar2 = Calendar.getInstance();
+			calendar1.setTime(date1);
+			calendar2.setTime(date2);
+			long milliseconds1 = 0;
+			long milliseconds2 = 0;
+			if (calendar1.compareTo(calendar2) > 0) {
+				milliseconds2 = calendar2.getTimeInMillis();
+				milliseconds1 = calendar1.getTimeInMillis();
+			} else {
+				milliseconds1 = calendar2.getTimeInMillis();
+				milliseconds2 = calendar1.getTimeInMillis();
+			}
+			milliSeconds = milliseconds1 - milliseconds2;
+		}
+		return milliSeconds;
+	}
+
+	/**
+	 * This method will convert a given date into an XMLGregorianCalendary
+	 * datatype (used for XML communication)
+	 * 
+	 * @param date
+	 *            date to be converted into XML format
+	 * @return XMLGregorianCalendar converted xml object
+	 * @throws DatatypeConfigurationException
+	 *             in case of parsing error
+	 */
+	public static XMLGregorianCalendar getDateInXMLFormat(Date date)
+			throws DatatypeConfigurationException {
+		XMLGregorianCalendar xmlDate = null;
+		if (date != null) {
+			xmlDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(
+					new GregorianCalendar(getYear(date), getMonth(date),
+							getDay(date)));
+
+		}
+		return xmlDate;
+	}
+
+	/**
+	 * This method is used to return the first date of the month
+	 * 
+	 * @return Date first date of the month .
+	 */
+	public static Date getFirstDayOfMonth(Date date) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.set(Calendar.DAY_OF_MONTH, 1);
+		Date firstOfMonth = cal.getTime();
+		return firstOfMonth;
+	}
+
+	/**
+	 * This method is used to return the last of the month date
+	 * 
+	 * @return Date last date of the month .
+	 */
+	public static Date getLastDayOfMonth(Date date) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(Calendar.MONTH, 1);
+		cal.set(Calendar.DAY_OF_MONTH, 1);
+		cal.add(Calendar.DATE, -1);
+		Date lastOfMonth = cal.getTime();
+		return lastOfMonth;
+	}
+
+	public static Date getLastDayOfMonth(String month, String year) {
+		Calendar cal = Calendar.getInstance();
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+		try {
+			cal.setTime(formatter.parse("1/" + month + "/" + year));
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		cal.add(Calendar.MONTH, 1);
+		cal.set(Calendar.DAY_OF_MONTH, 1);
+		cal.add(Calendar.DATE, -1);
+		Date lastOfMonth = cal.getTime();
+		return lastOfMonth;
+	}
+
+	public static Date getFirstDayOfMonth(String month, String year) {
+		Calendar cal = Calendar.getInstance();
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+		try {
+			cal.setTime(formatter.parse("1/" + month + "/" + year));
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		cal.set(Calendar.DAY_OF_MONTH, 1);
+		Date firstOfMonth = cal.getTime();
+		return firstOfMonth;
+	}
+
+	/**
+	 * This method gets today's date in Julian form (i.e. yyyyDDD)
+	 * 
+	 * @return julianDay The Julian form of today's date
+	 */
+	public static String getJulianCurrentDate() {
+		GregorianCalendar cal = new GregorianCalendar();
+		cal.setGregorianChange(new Date(Long.MAX_VALUE));
+		Date todayJD = cal.getTime();
+		SimpleDateFormat sdfJulianDate = new SimpleDateFormat("yyyyDDD");
+		return sdfJulianDate.format(todayJD);
+	}
+
+	// Converts a java.util.Date into an instance of XMLGregorianCalendar
+	public static XMLGregorianCalendar asXMLGregorianCalendar(Date date)
+			throws DatatypeConfigurationException {
+		DatatypeFactory df = null;
+		df = DatatypeFactory.newInstance();
+		if (date == null) {
+			return null;
+		} else {
+			GregorianCalendar gc = new GregorianCalendar();
+			gc.setTimeInMillis(date.getTime());
+			return df.newXMLGregorianCalendar(gc);
+		}
+
+	}
+
+	public static XMLGregorianCalendar toGregorianDate(Date date) {
+		try {
+			return DatatypeFactory.newInstance().newXMLGregorianCalendar(
+					dateToString(false, date));
+		} catch (DatatypeConfigurationException e) {
+			// e.printStackTrace();
+			LOGGER.error("DatatypeConfigurationException", e);
+		}
+		return null;
+	}
+
+	/**
+	 * If the passed in date has 2 digit year, method will format to 4 digit
+	 * year
+	 * 
+	 * @param date
+	 *            date to be formatted
+	 * @return formatted date
+	 */
+	@SuppressWarnings("deprecation")
+	public static Date formatToFourDigitYear(Date date) {
+
+		int filingYear = Integer.parseInt(DateUtil.formatDate(date,
+				DatePatternEnum.DEFAULT).substring(6, 10));
+		if (String.valueOf(filingYear).length() < 3) {
+			String currentYearFirstTwoDigit = DateUtil.formatDate(
+					DateUtil.getCurrDate(), DatePatternEnum.DEFAULT).substring(
+					6, 8);
+			String filingYearFirstTwoDigit = DateUtil.formatDate(date,
+					DatePatternEnum.DEFAULT).substring(8, 10);
+			date.setYear(Integer.parseInt(currentYearFirstTwoDigit
+					+ filingYearFirstTwoDigit) - 1900);
+		}
+		return date;
+	}
+
+	@SuppressWarnings("deprecation")
+	public static Date formatToFourDigitYearmm(Date date) {
+
+		int filingYear = Integer.parseInt(DateUtil.formatDate(date,
+				DatePatternEnum.DEFAULT).substring(6, 10));
+		if (String.valueOf(filingYear).length() < 3) {
+			String currentYearFirstTwoDigit = DateUtil.formatDate(
+					DateUtil.getCurrDate(),
+					DatePatternEnum.SLASH_MONTHLY_MM_YYYY).substring(3, 5);
+			String filingYearFirstTwoDigit = DateUtil.formatDate(date,
+					DatePatternEnum.SLASH_MONTHLY_MM_YYYY).substring(5, 7);
+			date.setYear(Integer.parseInt(currentYearFirstTwoDigit
+					+ filingYearFirstTwoDigit) - 1900);
+		}
+		return date;
+
+	}
+
+	public static Date getDateFromQuarter(String month, String year)
+			throws ParseException {
+		String dateStr = month + "-01-" + year;
+		SimpleDateFormat sdSlash = new SimpleDateFormat(
+				DatePatternEnum.MM_DD_YYYY.getValue());
+
+		Date date = sdSlash.parse(dateStr);
+
+		return date;
+	}
+
+	public static Date getLastDayOfTheQuarter(String month, String year)
+			throws ParseException {
+		return getLastDayOfMonth(DateUtil.getDateFromQuarter(month, year));
+	}
+
+	public static Date getDateFromString(String sDate) {
+
+		Date parsedDate = parse(sDate, DatePatternEnum.SLASH_MM_DD_YYYY_hh_mm_a);
+		return parsedDate;
+	}
+
+	public static String getStringDate(Date inDate) {
+		return parseDateToString(DatePatternEnum.MM_DD_YYYY, inDate);
+	}
+
+	public static Date getStartDayOfMonthOfQuater(Date date) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(Calendar.MONTH, 1);
+		cal.set(Calendar.DAY_OF_MONTH, 1);
+		cal.add(Calendar.DATE, 0);
+		Date lastOfMonth = cal.getTime();
+		return lastOfMonth;
+	}
+
+	/**
+	 * This method is used to return the Start Date of the selected Quarter
+	 * 
+	 * @return Date last date of the month .
+	 */
+	public static Date getDateFromStartMonthQuarter(String month, String year)
+			throws ParseException {
+		int startMonth = Integer.valueOf(month).intValue();
+		startMonth = startMonth - 3;
+		String dateStr = startMonth + "-01-" + year;
+		SimpleDateFormat sdSlash = new SimpleDateFormat(
+				DatePatternEnum.MM_DD_YYYY.getValue());
+
+		Date date = sdSlash.parse(dateStr);
+
+		return date;
+	}
+
+	/**
+	 * This method is used to return the Last Date of the selected Quarter
+	 * 
+	 * @return Date last date of the Quarter.
+	 */
+	public static Date getLastDayOfCurrentQuarter() throws ParseException {
+
+		int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
+		int quarter = month % 3 == 0 ? (month / 3) : (month / 3) + 1;
+		int year = Calendar.getInstance().get(Calendar.YEAR);
+
+		SimpleDateFormat sd = new SimpleDateFormat(
+				DatePatternEnum.DEFAULT.getValue());
+
+		switch (quarter) {
+		case 1:
+			return sd.parse("03/31/" + year);
+		case 2:
+			return sd.parse("06/30/" + year);
+		case 3:
+			return sd.parse("09/30/" + year);
+		case 4:
+			return sd.parse("12/31/" + year);
+
+		default:
+			break;
+		}
+		return null;
+	}
+
+	public static Date getLastDayOfDateYear(Date date) {
+		try {
+			return getLastDayOfTheQuarter("12",
+					String.valueOf(getYearFromDate(date)));
+		} catch (Exception e) {
+			LOGGER.error("Error Occured in getLastDayOfDateYear");
+		}
+		return null;
+	}
+
+	public static int getYearFromDate(Date date) {
+		int result = -1;
+		if (date != null) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			result = cal.get(Calendar.YEAR);
+		}
+		return result;
+	}
+
+	/**
+	 * This method returns a current date based on provided format
+	 * 
+	 * @param DatePatternEnum
+	 *            format to which the date needs to be converted
+	 * @return the formatted date
+	 */
+	public static String getCurrentDate(DatePatternEnum format) {
+
+		SimpleDateFormat formatter = null;
+		String formattedDate = null;
+		if (null != format) {
+			formatter = new SimpleDateFormat(format.getValue());
+			formattedDate = formatter.format(new Date());
+		}
+		return formattedDate;
+	}
+
+	/**
+	 * Given months it returns add date based on months
+	 * 
+	 * @param date
+	 *            given Date
+	 * @return the month name
+	 */
+
+	public static Date addMonths(int months) {
+		Calendar currentDate = Calendar.getInstance();
+		currentDate.add(Calendar.MONTH, months);
+		return currentDate.getTime();
+
+	}
+
+	/**
+	 * This method returns a current date based on provided format
+	 * 
+	 * @param DatePatternEnum
+	 *            format to which the date needs to be converted
+	 * @return the formatted date
+	 */
+	public static Date getDate(String date, DatePatternEnum format) {
+		SimpleDateFormat formatter = null;
+		Date formattedDate = null;
+		if (null != format) {
+			formatter = new SimpleDateFormat(format.getValue());
+			try {
+				formattedDate = formatter.parse(date);
+			} catch (ParseException e) {
+				LOGGER.error("Exception in DateUtil.getDate", e);
+			}
+		}
+		return formattedDate;
+	}
+
+	public static Date getConversionDate() {
+		return DateUtil.parse(CONVERSION_DATE, DatePatternEnum.DEFAULT);
+
+	}
+
+	/**
+	 * This method returns SQL Date from input Util Date
+	 * 
+	 * @param utilDate
+	 * @return sqlDate
+	 */
+	public static java.sql.Date getSQLDate(Date utilDate) {
+		java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+		return sqlDate;
+	}
+
+	/**
+	 * This method returns SQL Date from input Util Date
+	 * 
+	 * @param utilDate
+	 * @return sqlDate
+	 */
+	public static java.sql.Date getSQLDateFromString(String utilDate) {
+		Date parsedDate = parse(utilDate, DatePatternEnum.DASH_DD_MMM_YY);
+		java.sql.Date sqlDate = new java.sql.Date(parsedDate.getTime());
+		return sqlDate;
+	}
+
+	public static String getPreviousYearFromDate(Date date) {
+		int result = 0;
+		if (date == null) {
+			date = new Date();
+		}
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		result = cal.get(Calendar.YEAR);
+		result = result - 1;
+
+		return Integer.toString(result);
+	}
+
+	public static String getStringMonth(String tMonth) {
+		LOGGER.debug("Month:" + tMonth);
+		String sMonth = new DateFormatSymbols().getMonths()[Integer
+				.valueOf(tMonth) - 1];
+		LOGGER.debug("Month:" + sMonth);
+		return sMonth;
+	}
+
+	public static String getStringDay(String tDay) {
+		LOGGER.debug("tDay:" + tDay);
+		if (null != tDay) {
+			if (tDay.equalsIgnoreCase("01") || tDay.equalsIgnoreCase("21")
+					|| tDay.equalsIgnoreCase("31")) {
+				tDay += "st";
+			} else if (tDay.equalsIgnoreCase("02")
+					|| tDay.equalsIgnoreCase("22")) {
+				tDay += "nd";
+			} else if (tDay.equalsIgnoreCase("03")
+					|| tDay.equalsIgnoreCase("23")) {
+				tDay += "rd";
+			} else {
+				tDay += "th";
+			}
+		}
+		LOGGER.debug(tDay);
+		return tDay;
+	}
+
+	/**
+	 * This method returns a Annual or Quarterly based on provided dates
+	 * 
+	 * @param obligationStartDate
+	 * @param obligationEndDate
+	 * @return the String of either Annual or Quarterly
+	 */
+	public static String getAnnualOrQuarter(Date obligationStartDate,
+			Date obligationEndDate) throws Exception {
+		if (obligationStartDate != null && obligationEndDate != null) {
+			if (obligationStartDate.compareTo(obligationEndDate) > 0) {
+				throw new Exception(
+						"ObligationStartDate date is greater than the obligationEndDate");
+			}
+			if (obligationStartDate.compareTo(obligationEndDate) == 0) {
+				throw new Exception(
+						"ObligationStartDate and obligationEndDate shouldn't be same");
+			}
+			long dateDiff = dateDifferenceInMonths(obligationStartDate,
+					obligationEndDate);
+			Date lastDayofMonth = getDateWithZeroTime(getLastDayOfMonth(obligationEndDate));
+			if (dateDiff == 2 && lastDayofMonth.equals(obligationEndDate)) {
+				return "143";
+			} else if (dateDiff == 11
+					&& lastDayofMonth.equals(obligationEndDate)) {
+				return "144";
+			}
+
+		}
+		return null;
+	}
+
+	public static Date getNextBusinessDate(Date date) {
+		Calendar calDate = Calendar.getInstance();
+		calDate.setTime(date);
+		int dayOfWeek = calDate.get(Calendar.DAY_OF_WEEK);
+
+		if (Calendar.SATURDAY == dayOfWeek) {
+			return addDays(calDate.getTime(), 2);
+		}
+
+		if (Calendar.SUNDAY == dayOfWeek) {
+			return addDays(calDate.getTime(), 1);
+		}
+
+		return calDate.getTime();
+	}
+	
+	public static String getQuarterFromDate(Date date) {
+      Calendar calDate = Calendar.getInstance();
+      calDate.setTime(date);
+      int quarter = (calDate.get(Calendar.MONTH)/ 3) + 1;
+      return quarter+"";
+   }
+
+	public static Date calQtrDatefromEndDate(Date date,int quarter) {
+	   Calendar calDate = Calendar.getInstance();
+      calDate.setTime(date);
+      switch (quarter) {
+      case 1:
+          calDate.add(Calendar.MONTH, -9);
+          break;
+      case 2:
+         calDate.add(Calendar.MONTH, -6);
+         break;
+      case 3:
+         calDate.add(Calendar.MONTH, -3);
+         break;
+      }
+      calDate.set(Calendar.DATE, calDate.getActualMaximum(Calendar.DATE));
+      return calDate.getTime();
+      
+   }
+	
+	public static Date calQtrStrDatefromEndDate(Date date,int quarter) {
+      Calendar calDate = Calendar.getInstance();
+      calDate.setTime(date);
+      switch (quarter) {
+      case 1:
+          calDate.add(Calendar.MONTH, -11);
+          break;
+      case 2:
+         calDate.add(Calendar.MONTH, -8);
+         break;
+      case 3:
+         calDate.add(Calendar.MONTH, -5);
+         break;
+      case 4:
+         calDate.add(Calendar.MONTH, -2);
+         break;   
+      }
+      calDate.set(Calendar.DATE, calDate.getActualMinimum(Calendar.DATE));
+      return calDate.getTime();
+      
+   }
+
+}
