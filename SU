@@ -1,0 +1,852 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Locale;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import oh.tax.stars.webui.common.enums.DeployEnvironEnum;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+ 
+public class GeneralUtil {
+
+	public static final int POSITION_BEGINNING = 0;
+	public static final int POSITION_ENDING = 1;
+	private final static char TEMPLATECHARID = '#';
+	 private static final BigDecimal    ONE_HUNDRED     = new BigDecimal(100);
+	
+
+  	/**
+  	 * No need for an instance.
+  	 */
+  	protected STARSUtil(){
+  	}
+  	
+	/**
+	 * Given a <code>String</code>, padding character, padding position
+	 * and maximum length, it formats the string by padding it with 
+	 * the given character  upto the maximum length specified.
+	 * <p>
+	 * NOTE: Accepted values for padding position are:
+	 * <li>StringUtil.POSITION_BEGINNING
+	 * <li>StringUtil.POSITION_ENDING - Defaults to in case an invalid
+	 * 		number is passed
+	 * </p>
+	 * @param str the string to be formatted
+	 * @param paddingChar 
+	 * 			the character to be padded with
+	 * @param paddingPosition 
+	 * 			the position for padding
+	 * @param maxLength 
+	 * 			maximum length of the final string
+	 * @return the formatted string
+	 */
+	public static String formatString(final String str, 
+			final char paddingChar, 
+			int paddingPosition, 
+			final int maxLength){
+		String inputStr = "";
+		if (str == null){
+			inputStr = "";
+		}
+		else {
+			inputStr = str;
+		}
+		if (paddingPosition != STARSUtil.POSITION_BEGINNING && 
+					paddingPosition != STARSUtil.POSITION_ENDING){
+				paddingPosition = POSITION_ENDING;
+		}
+		StringBuilder outputStrBuffer = new StringBuilder(inputStr);		
+		for (int i=0; i < maxLength - inputStr.length(); i++){
+				if (paddingPosition == STARSUtil.POSITION_BEGINNING){
+					outputStrBuffer.insert(0, paddingChar);
+				}
+				else {
+					outputStrBuffer.append(paddingChar);
+				}
+			}
+		inputStr = outputStrBuffer.toString();
+		
+		return inputStr;
+	}
+	
+	public static String formatWithDecimals(double value) {  
+	   DecimalFormat formatter = new DecimalFormat("#,###.00");
+	   return formatter.format(value);
+	}
+
+
+	/**
+	 * Deletes the last character in the given <code>StringBuilder</code> 	 *
+	 * @param paramIn
+	 * 			In the StringBuilder for which last character has to be removed 
+	 * @return the formatted <code>String</code> 
+	 */	
+	public static StringBuilder deleteLast(StringBuilder paramIn) {
+		StringBuilder paramOut = new StringBuilder();
+		if (paramIn != null && !isNullOrBlank(paramIn.toString())) {
+			paramOut = new StringBuilder(paramIn.substring(0, paramIn.length() - 1));
+		}
+		return paramOut;
+	}
+
+	/**
+	 * Method checks whether is string is empty or null
+	 * @param value
+	 * 			string value to be checked
+	 * @return <code>true</code> if the string is null or blank
+	 * 		   <code>false</code> otherwise
+	 */	
+	public static boolean isEmptyString(String value){
+		return null == value|| "".equals(value.trim())?true:false;
+	}
+	
+	/**
+	 * Method checks whether is string is empty or null
+	 * @param value
+	 * 			string value to be checked
+	 * @return <code>true</code> if the string is null or blank
+	 * 		   <code>false</code> otherwise
+	 */	
+	public static boolean isEmptyList(List<?> list){
+		return null == list || list.size()==0 ? true:false;
+	}
+	
+	/**
+	 * Checks if the given Object is null or not. 
+	 * @param obj the Object to be checked
+	 * @return <code>true</code> if the Object is null or not
+	 * 		   <code>false</code> otherwise
+	 */
+	public static boolean isNull(Object obj){
+		return (obj == null);
+	}
+	
+	/**
+    * Checks if the given Object is not Null. 
+    * @param obj the Object to be checked
+    * @return <code>true</code> if the Object is null or not
+    *          <code>false</code> otherwise
+    */
+   public static boolean isNotNull(Object obj){
+      return (obj != null);
+   }
+   
+	
+	/**
+	 * Checks if the given string is null or blank.
+	 * String with only white spaces is treated as blank.
+	 * @param str 
+	 * 			the string to be checked
+	 * @return <code>true</code> if the string is null or blank
+	 * 		   <code>false</code> otherwise
+	 */
+	public static boolean isNullOrBlank(String str){
+		return (str == null || str.trim().length() == 0);
+	}
+
+	/**
+	 * Checks if the given string is blank.
+	 * String with only white spaces is treated as blank.	
+	 * @param str 
+	 * 			the string to be checked
+	 * @return <code>true</code> if the string is blank
+	 * 		   <code>false</code> otherwise
+	 */
+	public static boolean isBlank(String str){
+		return StringUtils.isBlank(str);
+	}
+
+	/**
+	 * Checks if the given string is Numeric.
+	 * @param str 
+	 * 			the string to be checked
+	 * @return <code>true</code> if the string is numeric
+	 * 			<code>false</code> otherwise
+	 */
+	public static boolean isNumeric(String str){
+		return !isEmptyString(str) && StringUtils.isNumeric(str);
+	}
+
+	/**
+	 * Checks if the given string contains Alphabets and Numbers only.
+	 *
+	 * @param str the string to be checked
+	 * @return <code>true</code> if the string is AlphaNumeric
+	 * 		   <code>false</code> otherwise
+	 */
+	public static boolean isAlphanumeric(String str){
+		return StringUtils.isAlphanumeric(str);
+	}
+
+	/**
+	 * Checks if the given string contains Alphabets , Numbers and space only.
+	 * @param str 
+	 * 			the string to be checked
+	 * @return <code>true</code> if the string is Alphabets , Numbers and space
+	 * 		   <code>false</code> otherwise
+	 */
+	public static boolean isAlphanumericSpace(String str){
+		return StringUtils.isAlphanumericSpace(str);
+	}
+
+	/**
+	 * Checks if the given string contains Alphabets only.
+	 *
+	 * @param str 
+	 * 			the string to be checked
+	 * @return <code>true</code> if the string is Alphabets 
+	 * 			<code>false</code> otherwise
+	 */
+	public static boolean isAlpha(String str){
+		return StringUtils.isAlpha(str);
+	}
+
+	/**
+	 * Checks the number of digits in the given string
+	 *
+	 * @param str 
+	 * 			the string to be checked
+	 * @return integer as number of digits
+	 */
+	public static int getNumberOfDigits(String str){
+		int count=0;
+		if(null != str){
+		char a[]=str.toCharArray();		
+			if (a!=null){
+				for (int i=0;i<a.length;i++){
+					if (Character.isDigit(a[i])){
+						count++;
+					}
+				}
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Synonym for String equalsIgnoreCase
+	 *
+	 * @param str1 
+	 * 			the string to be checked
+	 * @param str2 
+	 * 			the string to be checked
+	 * @return <code>true</code> if the both the strings are equal
+	 * 			<code>false</code> otherwise
+	 */
+	public static boolean equalsIgnoreCase(String str1, String str2){
+		str1 = str1==null? "": str1;
+		str2 = str2==null? "": str2;
+
+		return StringUtils.equalsIgnoreCase(str1, str2);
+	}
+
+	/**
+	 * Deletes the first character in the given  <code>String</code> 
+	 *
+	 * @param paramIn 
+	 * 			the string for which first character has to be removed 
+	 * @return the formatted <code>String</code> 
+	 */
+	public static String deleteFirst(String paramIn) {
+		String paramOut = "";
+		if(!isNullOrBlank(paramIn)){
+			paramOut = paramIn.substring(1, paramIn.length());
+		}
+		return paramOut;
+	}
+
+	/**
+	 * Deletes the last character in the given <code>String</code> 
+	 *
+	 * @param paramIn 
+	 * 			the string for which last character has to be removed 
+	 * @return formatted <code>String</code> 
+	 */
+	public static String deleteLast(String paramIn) {
+		String paramOut = "";
+		if(!isNullOrBlank(paramIn)){
+			paramOut = paramIn.substring(0, paramIn.length() - 1);
+		}
+		return paramOut;
+	}
+
+	/**
+	 * Given a <code>String</code>, padding character, padding position
+	 * and maximum length, it formats the string by replacing it with 
+	 * the given character  upto the maximum length specified.
+	 * 
+	 * @param str 
+	 * 			the string to be formatted
+	 * @param paddingChar 
+	 * 			the character to be padded with
+	 * @param startPosition 
+	 * 			the position for padding
+	 * @param maxLength 
+	 * 			maximum length of the final string
+	 * @return the formatted string
+	 */
+	public static String replaceString(final String str, 
+			final char paddingChar, 			
+			final int startPosition,final int maxlength){
+		String inputStr = "";
+		if (str == null){
+			inputStr = "";
+		}
+		else {
+			inputStr = str;
+		}
+		StringBuilder outputStrBuffer = new StringBuilder(inputStr);
+		for (int i=startPosition; i < maxlength; i++){			
+			outputStrBuffer.setCharAt(i, paddingChar);
+		}
+		return outputStrBuffer.toString();
+	}
+
+	/**
+	 * Given a <code>String</code>, will check for the valid email
+	 * 
+	 * @param str 
+	 * 			the string to be validated
+	 * @return  <code>true</code> if the string is valid email
+	 * 			<code>false</code> otherwise
+	 */
+	public static boolean isValidEmail(String str) {
+		return matchesRegEx (str, "^[\\w\\.-_]+@([\\w\\-]+\\.)+[A-Z]{2,4}$", false);
+	}
+
+	/**
+	 * Given a <code>String</code>, will check for the valid phone number
+	 * 
+	 * @param str 
+	 * 			the string to be validated
+	 * @return  <code>true</code> if the string is valid phone number
+	 * 			<code>false</code> otherwise
+	 */
+	public static boolean isValidPhoneNumber(String str) {
+		return matchesRegEx (str, "^\\(?(\\d{3})\\)?[- ]?(\\d{3})[- ]?(\\d{4})[ ]?(\\d{1,5})?$", false);
+	}
+
+	/**
+	 * Given a <code>String</code>, will check for the valid SSN
+	 * 
+	 * @param str 
+	 * 			the string to be validated
+	 * @return  <code>true</code> if the string is valid SSN
+	 * 			<code>false</code> otherwise
+	 */
+	public static boolean isValidSSN(String str) {
+		return matchesRegEx (str, "^\\d{3}[- ]?\\d{2}[- ]?\\d{4}$", false);
+	}
+
+	/**
+	 * Given a <code>char</code>, will give the next character
+	 * 
+	 * @param chr 
+	 * 			the previous character 
+	 * @return  the <code>String</code> 
+	 */
+	public static String getNextAsciiChar(char chr){
+		String a;
+		int ascii=(((int)chr)+1);
+		a=""+(char)ascii;
+		return a;
+	}
+
+	/**
+	 * Given a <code>String</code>, padding character, size 
+	 * , it formats the string by left padding it with 
+	 * the given character  upto the maximum size specified.
+	 * 
+	 * @param str 
+	 * 			the string to be formatted
+	 * @param size 
+	 * 			the maximum size to be padded
+	 * @param padChar 
+	 * 			the character to be padded
+	 * @return the formatted string
+	 */
+	public static String leftPad(String str,int size,char padChar ){
+		return StringUtils.leftPad(str, size, padChar);
+	}
+	
+	/**
+	 * Given a <code>String</code>, padding character, size 
+	 * , it formats the string by right padding it with 
+	 * the given character  upto the maximum size specified.
+	 * 
+	 * @param str 
+	 * 			the string to be formatted
+	 * @param size 
+	 * 			the maximum size to be padded
+	 * @param padChar 
+	 * 			the character to be padded
+	 * @return the formatted string
+	 */
+	public static String rightPad(String str,int size,char padChar ){
+		return StringUtils.rightPad(str, size, padChar);
+	}
+
+	/**
+	 * Given a <code>String</code> as originalString and  a <code>String</code> as removeString
+	 * will remove the removeString from the originalString.
+	 * 
+	 * @param originalString 
+	 * 				the  default/original string
+	 * @param removeString 
+	 * 				the remove String 
+	 * @return  <code>String</code> 
+	 */
+	public static String  remove(String originalString,String removeString){	
+		return StringUtils.remove(originalString, removeString) ;
+	}
+
+
+	// the method used to parse the inputText and format it as specified by the Mask.
+
+	/**
+	 * pInputText needs to be the string that needs formatted. 
+	 * pMask should be any string of characters with '#' signs representing where
+	 * the pInputText characters should go.  
+	 * Example:
+	 * 	pInputText   = "123456789"
+	 *  pMask	     = "###-##-####"
+	 *  return Value = "123-45-6789"
+	 * 
+	 * This should only be used if you know the exact size of pInputText, because
+	 * the pMask should contain as many '#' as there are characters in pInputText.
+	 * This method is best used for formatting SSN's, Tax id #'s, Org Codes, and 
+	 * other fields of a fixed length.
+	 */
+
+	/**
+	 * Formats the supplied text data based on the supplied template.
+	 * @param	inputText The text that needs to be formatted.
+	 * @param	template The template that defines the format for the 
+	 * 			expected result.
+	 * @return	formatted string result or null in case of failure.
+	 */
+	public static String format(String inputText, String template) throws Exception {
+		String formattedString = null;
+		StringBuilder formattedText = new StringBuilder();
+		// Return null for empty strings.
+		if ((inputText != null) && !(inputText.equals(""))){
+			int inputTextParsePos = 0;
+			int templateParsePos = 0;
+	
+			while ((inputTextParsePos < inputText.length())	&& (templateParsePos < template.length())) {
+	
+				// Check the template's current position character. If it is
+				// 'TEMPLATECHARID' then append the input text to the result,
+				// else append the template defined character to the result.
+				if (template.charAt(templateParsePos) == TEMPLATECHARID) {
+					formattedText.append(inputText.charAt(inputTextParsePos));
+					++inputTextParsePos;
+				} else {
+					formattedText.append(template.charAt(templateParsePos));
+				}
+				++templateParsePos;
+			}
+			// If the input text is smaller than the expected result, fill
+			// it with the filler character.
+			if (templateParsePos < template.length()) {
+				throw new Exception(
+						"TextFormatter: Input text ("
+						+ inputText
+						+ ") is smaller than the template ("
+						+ template
+						+ ").");
+			} else
+				if (inputTextParsePos < inputText.length()) {
+					// Input text is larger than the template; append the rest
+					// of the input text to the result.
+					throw new Exception(
+							"TextFormatter: Input text ("
+							+ inputText
+							+ ") is larger than the template ("
+							+ template
+							+ ").");
+				}
+			formattedString = formattedText.toString();
+		}
+		
+		return formattedString;
+
+	}
+	
+	/**
+	 * Method converts the passed string into upper case string
+	 * @param inputString
+	 * 				string to be converted into upper case
+	 * @return the uppercase string
+	 */
+	public static String toUpperCase(String inputString ){		 
+		String str=""; 
+		if( inputString!=null ) {
+			 str=inputString.toUpperCase().trim();
+		 }
+		return str;
+	}
+
+	public static String parseHTMLText(String inputString) {
+	    return inputString.replaceAll("\\<.*?\\>", "");
+	}
+	
+	/**
+	 * This method checks if the data matches the regular expression
+	 * @param strRegex
+	 * 		Regular expression
+	 * @param strData
+	 * 		Data to be compared	
+	 * @return boolean
+	 * 		true if data matches the expression
+	 */
+	public static boolean checkIfMatchesPattern(String strRegex,String strData){
+		boolean patternMatched=false;
+		Pattern pattern = Pattern.compile(strRegex);
+		Matcher matcher = pattern.matcher(strData);
+		patternMatched = matcher.matches();
+		return patternMatched;
+	}
+	
+	public static String getProperty(String Key){
+		String value = System.getProperty(Key);
+		return value;
+	}
+	
+	/**
+	 * Validates given value for currency amount
+	 * @param strValue value to be validated
+	 * @return returns true if passed value is proper currency amount
+	 */
+	public static boolean checkIfCurrency(String strValue)
+	{
+		boolean flag = true;
+		try
+		{
+			if(strValue.trim().equals(""))
+			{
+				return false;
+			}
+			StringTokenizer strCheck = new StringTokenizer(strValue, ".");
+			if(strCheck.countTokens() > 2)
+			{
+				flag = false;
+				return flag;
+			}
+			String strVal = "";
+			while(strCheck.hasMoreTokens())
+			{
+				strVal = strCheck.nextToken();
+				if(isNumeric(strVal))
+				{
+					flag = true;
+				}
+				else
+				{
+					flag = false;
+					break;
+				}
+			}
+			return flag;
+		}
+		catch(Exception e)
+		{
+			//e.printStackTrace();
+		   LOGGER.error(" ",e);
+			return false;
+		}
+	}
+	
+	/**
+	 * @author CJohns
+	 * 
+	 * Check <code> Constants </code>  if <code> ALLOW_DECIMALS </code> is allowed.
+	 * If Decimals are allowed then set the decimal scale to 2 places and return decimal.
+	 * Id decimals are not allowed then set the decimal scal to 0 places and return decimal.
+	 * 
+	 * @param decimal value to check
+	 * 
+	 * @return BigDemimal with scale set.
+	 * 
+	 */
+	public static BigDecimal formatDollar(BigDecimal decimal, boolean hasDecimals)
+	{
+		if (hasDecimals) return decimal.setScale(2,BigDecimal.ROUND_HALF_UP);
+		return decimal.setScale(0,BigDecimal.ROUND_HALF_UP);		
+	}
+	
+	/**
+	 * Takes a BigDecimal and formats it for displaying as a 
+	 * dollar amount to a user.
+	 * For example, 1289.2 would become $1,289.20
+	 * 
+	 * @param decimal BigDecimal value to convert
+	 * @return String to display
+	 */
+	public static String formatDollarDisplay(BigDecimal decimal){
+		return formatDollarDisplay(decimal, true);
+	}
+	
+	
+	/**
+	 * Takes a BigDecimal and formats it for displaying as a 
+	 * dollar amount to a user.
+	 * For example, 
+	 * if hasDecimals is true, 1289.2 would become $1,289.20
+	 * if hasDecimals is false, 1289.2 would become $1,289
+	 * 
+	 * @param decimal
+	 * @param hasDecimals
+	 * @return
+	 */
+	public static String formatDollarDisplay(BigDecimal decimal, boolean hasDecimals){
+		NumberFormat n = NumberFormat.getCurrencyInstance(Locale.US);
+		if(!hasDecimals)
+			n.setMaximumFractionDigits(0);
+		return n.format(decimal.doubleValue());
+	}
+	
+		
+	/**
+	 * Takes a BigDecimal and formats it for displaying as a 
+	 * percentage amount to a user.
+	 * For example, 5423.77 would become 5,423.8%
+	 * @param percent BigDecimal value to convert
+	 * @return String to display
+	 */
+	public static String formatPercentDisplay(BigDecimal percent){
+		NumberFormat n = NumberFormat.getPercentInstance();
+		n.setMinimumFractionDigits(1);
+		n.setMinimumIntegerDigits(1);
+		n.setMaximumFractionDigits(1);
+		return n.format(percent.doubleValue());
+	}
+	 
+	/**
+	 * Takes a BigDecimal and formats it for displaying as an 
+	 * integer amount to a user.
+	 * For example, 6754.23 would become 6,754
+	 * @param integer BigDecimal value to convert
+	 * @return String to display
+	 */
+	public static String formatIntegerDisplay(BigDecimal integer){
+		NumberFormat n = NumberFormat.getIntegerInstance();
+		return n.format(integer.doubleValue());
+	}
+	
+	
+	/**
+	 * Takes a String and check for not null and returns the trimmed String.	
+	 * For example, Input " MyTest  " would return "MyTest".
+	 * When the input String is null then returns null.
+	 * @param String
+	 * @return String
+	 */
+	public static String trimField(final String paramString) {
+			   
+      if (paramString!= null && paramString.length()>0) {
+         return paramString.trim();
+      }else{
+    	  return paramString;
+      }
+		      
+   }
+	
+	
+	/**
+	 * Takes a String and check for not null and returns the trimmed String.	
+	 * For example, Input " MyTest  " would return "MyTest".
+	 * For null would return "".
+	 * When the input String is null then returns Empty.
+	 * @param String
+	 * @return String
+	 */
+	public static String trimFieldWithEmpty(final String paramString) {
+			   
+      if (paramString!= null) {
+         return paramString.trim();
+      }else{
+    	  return "";
+      }
+   }
+	
+	
+	  /**
+    * Takes a String and check for not null and remove the Occurrence   
+    * For example, Input " My-Test" would return "MyTest".
+    * For "-" would return "".
+    * 
+    * @param String
+    * @param String
+    * @return String
+    */
+   public static String removeCharOccurrence(final String paramString, final String removeChar) {
+
+      if (paramString!= null) {
+         //String fein = paramString.replace("-", "");
+         return paramString.replace(removeChar, "");
+      }else{
+        return "";
+      }
+   }
+
+   public static String removeCharOccurence(String string, String string2) {
+      return null;
+   }
+
+	
+   public static BigDecimal calclutePercentage(BigDecimal source,BigDecimal percentageVal){
+      BigDecimal bigDecimalVal = new BigDecimal("0.00");
+      bigDecimalVal=source.multiply(percentageVal).divide(ONE_HUNDRED);
+      bigDecimalVal=bigDecimalVal.setScale(2, BigDecimal.ROUND_HALF_UP);
+      return  bigDecimalVal;
+      
+   }
+   
+   public static String getDeployEnviron() {
+      String deployEnviron = System.getProperty("os.name").toLowerCase();
+      if(deployEnviron.indexOf(DeployEnvironEnum.Windows.getKey()) >= 0) {
+         return DeployEnvironEnum.Windows.getValue();
+      }
+      else if((deployEnviron.indexOf(DeployEnvironEnum.Aix.getKey()) >= 0 
+            || deployEnviron.indexOf(DeployEnvironEnum.Unix.getKey()) >= 0 
+            || deployEnviron.indexOf(DeployEnvironEnum.Nux.getKey()) > 0)) {
+         return DeployEnvironEnum.Unix.getValue();
+      }       
+      else if(deployEnviron.indexOf(DeployEnvironEnum.Mac.getKey()) >= 0) {
+         return DeployEnvironEnum.Mac.getValue();
+      }
+
+      else if(deployEnviron.indexOf(DeployEnvironEnum.Solaris.getKey()) >= 0) {
+         return DeployEnvironEnum.Solaris.getValue();
+      }
+      return null;
+   }
+   
+   public static boolean matchesRegEx (String value, String regExPattern, boolean caseSensitive) {
+		Pattern pattern = caseSensitive
+			? Pattern.compile(regExPattern)
+			: Pattern.compile(regExPattern,Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(value);
+		return matcher.matches();
+   }
+
+   public static boolean isValidCompanyName (String companyName) {
+	   return matchesRegEx(companyName, "(([A-Za-z0-9#/%\\-\\(\\)\\.\\&\\']) ?)*([A-Za-z0-9#/%\\-\\(\\)\\.\\&\\'])", true);
+   }
+   
+   private static void testValidCompanyName(String x, boolean expectedResult) {
+	   boolean actualResult = isValidCompanyName(x);
+	   System.out.println ("isValidCompanyName: " +
+			(expectedResult == actualResult ? "   " : "!!!") +
+			(actualResult ? " valid :" : "INVALID: ") + x);
+   }
+   private static void testValidSSN(String x, boolean expectedResult) {
+	   boolean actualResult = isValidSSN(x);
+	   System.out.println ("isValidSSN: " +
+			(expectedResult == actualResult ? "   " : "!!!") +
+			(actualResult ? " valid :" : "INVALID: ") + x);
+   }
+   public static void main (String [] args) {
+//	   testValidCompanyName(null, false);
+	   testValidCompanyName("", false);
+	   testValidCompanyName("Abc", true);
+	   testValidCompanyName("Ab c", true);
+	   testValidCompanyName(" Abc", false);
+	   testValidCompanyName("Abc ", false);
+	   testValidCompanyName("A'b-c", true);
+	   testValidCompanyName("!abc", false);
+	   testValidCompanyName("A12b", true);
+	   testValidCompanyName("A.b&c", true);
+	   testValidCompanyName("A(b)c", true);
+	   testValidCompanyName("A#%b'c", true);
+	   testValidCompanyName("A   b   c", false);
+	   testValidCompanyName("A b c", true);
+	   testValidSSN("123456789", true);
+	   testValidSSN("1234567890", false);
+	   testValidSSN("12345678", false);
+	   testValidSSN("123-45-6789", true);
+	   testValidSSN("123 45 6789", true);
+	   testValidSSN("123-45 6789", true);
+	   testValidSSN("123-456789", true);
+	   testValidSSN("12-3456789", false);
+	   testValidSSN("123a45b6789", false);
+   }
+   
+   public static boolean isValidZip (String zipCode) {
+	   return (zipCode == null)
+			? false
+			: zipCode.trim().matches("[0-9]{5}(([0-9]{4}))?");
+   }
+   
+   public static byte[] serialize(Serializable obj) {
+      ObjectOutputStream oos = null;
+      try {
+         ByteArrayOutputStream baos = new ByteArrayOutputStream(256);
+         oos = new ObjectOutputStream(baos);
+         oos.writeObject(obj);
+         return baos.toByteArray();
+      }
+      catch(IOException e) {
+         e.printStackTrace();
+      }
+      catch(Exception e) {
+         e.printStackTrace();
+      }
+      finally {
+         try {
+            if(oos != null) {
+               oos.close();
+            }
+         }
+         catch(IOException e) {
+            e.printStackTrace();
+         }
+      }
+      return null;
+   }
+
+   public static Object deserialize(byte[] data) {
+
+      ObjectInputStream ois = null;
+      try {
+         ois = new ObjectInputStream(new ByteArrayInputStream(data));
+         return ois.readObject();
+      }
+      catch(IOException e) {
+         e.printStackTrace();
+      }
+      catch(Exception e) {
+         e.printStackTrace();
+      }
+      finally {
+         try {
+            if(ois != null) {
+               ois.close();
+            }
+         }
+         catch(IOException e) {
+            e.printStackTrace();
+         }
+      }
+      return null;
+   }
+   
+   public static Object deepCopyVariables(Serializable serializableObj) {
+      return deserialize(serialize(serializableObj));
+   }
+	
+}
